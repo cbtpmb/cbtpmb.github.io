@@ -127,6 +127,7 @@
     </div>
     <h1 id="lJudul" style="text-align:center">Tes Penjurusan</h1>
     <p class="sub">Masuk menggunakan data pendaftaran Anda.</p>
+    <div id="noteFrame" class="wait" hidden style="margin:10px 0 0">Tampilan lebih stabil bila dibuka di tab sendiri. <a id="lnkTab" href="#" target="_blank" rel="noopener" style="color:inherit;font-weight:800">Buka di tab baru</a></div>
     <label for="inNo">Nomor Pendaftaran</label>
     <input id="inNo" autocomplete="off" autocapitalize="characters" placeholder="Contoh: PMB26001">
     <label for="inTgl">Tanggal Lahir</label>
@@ -343,10 +344,16 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
     }).catch(function (e) { showErr('#iErr', msg(e)); }).then(function () { busy(false); });
   };
 
+  /* Sesi tersimpan di tab ini saja (sessionStorage) agar refresh tidak memaksa login ulang. Hilang saat tab ditutup. */
+  var SKEY = 'cat_sesi';
+  function simpanSesi() { try { sessionStorage.setItem(SKEY, JSON.stringify({ no: ST.no, tgl: ST.tgl })); } catch (e) { /* diblokir: abaikan */ } }
+  function hapusSesi() { try { sessionStorage.removeItem(SKEY); } catch (e) { /* abaikan */ } }
+
   /* -------------------- TES -------------------- */
   function startTes(d) {
     ST.token = d.token; ST.soal = d.soal; ST.jaw = d.jaw || {}; ST.ragu = d.ragu || {};
     ST.dirty = {}; ST.cur = 0; ST.pel = d.pel; ST.max = d.maxPel; ST.active = true;
+    simpanSesi();
     setDeadline(d.sisa);
     $('#tNama').textContent = d.nama; $('#tNo').textContent = d.no + ' - ' + d.judul;
     updatePel();
@@ -488,6 +495,7 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
   }
 
   function showDone(h, alasan) {
+    hapusSesi();
     ST.active = false; timers.forEach(clearInterval); busy(false);
     $('#ovWarn').hidden = true; $('#ovConfirm').hidden = true;
     if (alasan) $('#dMsg').textContent = alasan;
@@ -551,6 +559,26 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
   window.addEventListener('beforeunload', function (e) {
     if (ST.active) { e.preventDefault(); e.returnValue = ''; }
   });
+
+  /* -------------------- LANJUT OTOMATIS SETELAH REFRESH -------------------- */
+  (function lanjutOtomatis() {
+    var s = null;
+    try { s = JSON.parse(sessionStorage.getItem(SKEY) || 'null'); } catch (e) { s = null; }
+    if (!s || !s.no || !s.tgl) return;
+    ST.no = s.no; ST.tgl = s.tgl; busy(true);
+    run('mulaiTes', s.no, s.tgl, navigator.userAgent).then(function (d) {
+      if (d.selesai) return showDone(d.hasil);
+      startTes(d);
+    }).catch(function (e) {
+      hapusSesi(); showErr('#lErr', 'Sesi sebelumnya tidak dapat dilanjutkan otomatis (' + msg(e) + '). Silakan login kembali.');
+    }).then(function () { busy(false); });
+  })();
+
+  /* Dibuka di dalam Google Sites (iframe): sarankan tab baru agar header/footer tidak ikut bergeser */
+  if (window.self !== window.top) {
+    $('#noteFrame').hidden = false;
+    $('#lnkTab').href = location.href;
+  }
 })();
 </script>
 </body>
