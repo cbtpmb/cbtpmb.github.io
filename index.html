@@ -108,7 +108,7 @@
     <h1 id="lJudul" style="text-align:center">Tes Penjurusan</h1>
     <p class="sub">Masuk menggunakan data pendaftaran Anda.</p>
     <label for="inNo">Nomor Pendaftaran</label>
-    <input id="inNo" autocomplete="off" autocapitalize="characters" placeholder="Contoh: PMB-0001">
+    <input id="inNo" autocomplete="off" autocapitalize="characters" placeholder="Contoh: PMB26001">
     <label for="inTgl">Tanggal Lahir</label>
     <input id="inTgl" autocomplete="off" inputmode="numeric" placeholder="DDMMYYYY, contoh 17082008">
     <div id="lErr" class="err" hidden></div>
@@ -137,6 +137,7 @@
       <li id="iInstruksi" hidden></li>
     </ul>
     <div id="iErr" class="err" hidden></div>
+    <div id="iWait" style="margin:10px 0;padding:10px 12px;border-radius:8px;background:#fff6dd;color:#7a5a00;font-size:14px;text-align:center" hidden>Menunggu panitia membuka tes. Tetap di halaman ini, tombol Mulai akan aktif otomatis.</div>
     <button id="btnMulai" class="full">Mulai Tes</button>
     <button id="btnBatal" class="full sec" style="margin-top:8px">Kembali</button>
   </div>
@@ -240,6 +241,7 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
   // Pemetaan nama fungsi lama ke fungsi database (RPC) di Supabase.
   var RPC = {
     cekLogin:       function (no, tgl) { return ['cek_login', { p_no: no, p_tgl: tgl }]; },
+    statusTes:      function () { return ['status_tes', {}]; },
     mulaiTes:       function (no, tgl, ua) { return ['mulai_tes', { p_no: no, p_tgl: tgl, p_ua: ua }]; },
     simpanJawaban:  function (no, tok, items) { return ['simpan_jawaban', { p_no: no, p_token: tok, p_items: items }]; },
     catatEvent:     function (no, tok, jenis, detail, durasi, lid) { return ['catat_event', { p_no: no, p_token: tok, p_jenis: jenis, p_detail: detail, p_durasi: durasi, p_leave_id: lid }]; },
@@ -285,17 +287,38 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
         : 'Setiap pelanggaran dilaporkan kepada panitia.';
       var ins = $('#iInstruksi'); ins.textContent = r.instruksi || ''; ins.hidden = !r.instruksi;
       if (r.selesai) { showErr('#iErr', 'Anda sudah menyelesaikan tes ini.'); $('#btnMulai').hidden = true; }
-      else { showErr('#iErr', ''); $('#btnMulai').hidden = false; $('#btnMulai').textContent = r.lanjut ? 'Lanjutkan Tes' : 'Mulai Tes'; }
+      else {
+        showErr('#iErr', ''); $('#btnMulai').hidden = false; $('#btnMulai').textContent = r.lanjut ? 'Lanjutkan Tes' : 'Mulai Tes';
+        // Gerbang operator: peserta yang belum mulai menunggu sampai panitia membuka tes
+        setMenunggu(!(r.buka || r.lanjut));
+      }
       show('sInfo');
     }).catch(function (e) { showErr('#lErr', msg(e)); }).then(function () { busy(false); });
   }
   $('#btnLogin').onclick = doLogin;
   $('#inTgl').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
-  $('#btnBatal').onclick = function () { show('sLogin'); };
+  $('#btnBatal').onclick = function () { setMenunggu(false); show('sLogin'); };
+
+  /* Layar tunggu: tombol Mulai nonaktif sampai operator membuka tes (cek tiap ~6 detik) */
+  var waitTimer = null;
+  function setMenunggu(w) {
+    clearTimeout(waitTimer); waitTimer = null;
+    $('#iWait').hidden = !w;
+    $('#btnMulai').disabled = !!w;
+    if (!w) return;
+    (function poll() {
+      waitTimer = setTimeout(function () {
+        run('statusTes').then(function (s) {
+          if (s && s.buka) setMenunggu(false); else poll();
+        }).catch(function () { poll(); });
+      }, 5000 + Math.random() * 3000);
+    })();
+  }
 
   $('#btnMulai').onclick = function () {
     busy(true); showErr('#iErr', '');
     run('mulaiTes', ST.no, ST.tgl, navigator.userAgent).then(function (d) {
+      setMenunggu(false);
       if (d.selesai) return showDone(d.hasil);
       startTes(d);
     }).catch(function (e) { showErr('#iErr', msg(e)); }).then(function () { busy(false); });
