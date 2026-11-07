@@ -54,16 +54,16 @@
   .wait::before { content:""; flex:none; width:10px; height:10px; border-radius:50%; background:#f5a800; animation:pulse 1.2s infinite; }
 
   /* Layar tes */
-  .top { position:sticky; top:0; z-index:5; background:rgba(255,255,255,.92); backdrop-filter:blur(8px); color:var(--text); display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 14px; box-shadow:0 1px 0 var(--line); }
+  .top { flex:none; position:relative; z-index:5; background:#fff; color:var(--text); display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 14px; box-shadow:0 1px 0 var(--line); }
   .top .who b { display:block; font-size:15px; }
   .top .who small { color:var(--mute); font-size:12px; }
   .timer { font:800 20px/1 "Plus Jakarta Sans",ui-monospace,Consolas,monospace; font-variant-numeric:tabular-nums; background:var(--primary-soft); color:var(--primary); padding:10px 14px; border-radius:14px; letter-spacing:.5px; }
   .timer.low { background:var(--red); color:#fff; animation:pulse 1s infinite; }
   @keyframes pulse { 50% { opacity:.55; } }
-  .sub-bar { display:flex; justify-content:space-between; gap:8px; font-size:12px; font-weight:600; padding:8px 16px; color:var(--mute); }
+  .sub-bar { flex:none; background:#fff; display:flex; justify-content:space-between; gap:8px; font-size:12px; font-weight:600; padding:8px 16px; color:var(--mute); }
   #syncState.off { color:var(--red); font-weight:800; }
 
-  .tes { max-width:1100px; margin:0 auto; padding:6px 12px 100px; display:grid; gap:14px; grid-template-columns:1fr; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+  .tes { max-width:1100px; flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; width:100%; margin:0 auto; padding:10px 12px 16px; display:grid; align-content:start; gap:14px; grid-template-columns:1fr; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
   .qcard { background:var(--card); border-radius:24px; padding:22px; box-shadow:0 1px 2px rgba(21,18,46,.04), 0 12px 32px rgba(21,18,46,.06); }
   .qhead { display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:13px; color:var(--mute); margin-bottom:14px; }
   .qhead b { color:var(--primary); background:var(--primary-soft); padding:6px 12px; border-radius:999px; }
@@ -87,8 +87,9 @@
   .legend { display:flex; flex-wrap:wrap; gap:12px; font-size:12px; margin-top:14px; color:var(--mute); font-weight:600; }
   .legend i { display:inline-block; width:12px; height:12px; border-radius:4px; margin-right:5px; vertical-align:-1px; border:1px solid var(--line); }
 
-  .bar { position:fixed; left:0; right:0; bottom:0; z-index:6; background:rgba(255,255,255,.94); backdrop-filter:blur(8px); border-top:1px solid var(--line); padding:10px 12px calc(10px + env(safe-area-inset-bottom)); display:flex; gap:8px; justify-content:center; }
-  .bar button { flex:1; max-width:220px; padding:13px 4px; font-size:13px; white-space:nowrap; }
+  #sTes:not([hidden]) { display:flex; flex-direction:column; height:100vh; height:100dvh; overflow:hidden; }
+  .bar { flex:none; z-index:6; background:#fff; border-top:1px solid var(--line); padding:8px 8px calc(8px + env(safe-area-inset-bottom)); display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .bar button { min-width:0; padding:12px 2px; font-size:12.5px; white-space:nowrap; border-radius:12px; }
 
   @media (max-width:899px) {
     .nav { position:fixed; left:0; right:0; bottom:0; z-index:8; border-radius:24px 24px 0 0; max-height:72vh; overflow:auto; transform:translateY(105%); transition:transform .22s; box-shadow:0 -12px 40px rgba(21,18,46,.3); }
@@ -96,7 +97,7 @@
   }
   @media (min-width:900px) {
     .tes { grid-template-columns:1fr 330px; align-items:start; }
-    .nav { position:sticky; top:96px; }
+    .nav { position:sticky; top:0; }
     #btnGrid, #btnCloseGrid { display:none; }
   }
 
@@ -174,7 +175,7 @@
   <div class="sub-bar"><span id="tPel">Pelanggaran: 0</span><span id="syncState">Tersimpan</span></div>
   <main class="tes">
     <section class="qcard">
-      <div class="qhead"><b id="qNo"></b><span id="qKat"></span></div>
+      <div class="qhead"><b id="qNo"></b></div>
       <div id="qText"></div>
       <img id="qImg" alt="" hidden>
       <div id="opts"></div>
@@ -192,10 +193,10 @@
     </aside>
   </main>
   <footer class="bar">
-    <button id="btnPrev" class="sec">&#9664; Sebelumnya</button>
+    <button id="btnPrev" class="sec">Sebelumnya</button>
     <button id="btnRagu" class="warn">Ragu-ragu</button>
-    <button id="btnGrid" class="sec">Daftar</button>
-    <button id="btnNext">Berikutnya &#9654;</button>
+    <button id="btnGrid" class="sec">Daftar Soal</button>
+    <button id="btnNext">Berikutnya</button>
   </footer>
 </div>
 
@@ -375,7 +376,6 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
   function render() {
     var s = ST.soal[ST.cur];
     $('#qNo').textContent = 'Soal ' + (ST.cur + 1) + ' dari ' + ST.soal.length;
-    $('#qKat').textContent = s.kat || '';
     $('#qText').textContent = s.q;
     var img = $('#qImg');
     if (s.img) { img.src = s.img; img.hidden = false; } else { img.hidden = true; img.removeAttribute('src'); }
@@ -391,7 +391,7 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
     });
     $('#btnRagu').textContent = ST.ragu[s.id] ? 'Batal Ragu' : 'Ragu-ragu';
     $('#btnPrev').disabled = ST.cur === 0;
-    $('#btnNext').innerHTML = ST.cur === ST.soal.length - 1 ? 'Selesai' : 'Berikutnya &#9654;';
+    $('#btnNext').innerHTML = ST.cur === ST.soal.length - 1 ? 'Selesai' : 'Berikutnya';
     renderGrid();
     window.scrollTo(0, 0);
   }
