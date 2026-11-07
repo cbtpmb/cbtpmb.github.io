@@ -296,9 +296,15 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
   function doLogin() {
     var no = $('#inNo').value.trim(), tgl = $('#inTgl').value.trim();
     if (!no || !tgl) return showErr('#lErr', 'Isi nomor pendaftaran dan tanggal lahir.');
+    masuk(no, tgl, false);
+  }
+
+  /* Verifikasi data lalu tampilkan layar konfirmasi. otomatis=true: dipulihkan setelah refresh. */
+  function masuk(no, tgl, otomatis) {
     showErr('#lErr', ''); busy(true);
-    run('cekLogin', no, tgl).then(function (r) {
+    return run('cekLogin', no, tgl).then(function (r) {
       ST.no = no; ST.tgl = tgl; ST.meta = r;
+      simpanSesi('info');
       $('#iJudul').textContent = r.judul;
       $('#iNama').textContent = r.nama; $('#iNo').textContent = r.no;
       $('#iJml').textContent = r.jumlah + ' soal'; $('#iDur').textContent = r.durasi + ' menit';
@@ -306,18 +312,21 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
         ? 'Batas pelanggaran: ' + r.maxPel + ' kali. Melebihi batas, tes dihentikan otomatis.'
         : 'Setiap pelanggaran dilaporkan kepada panitia.';
       var ins = $('#iInstruksi'); ins.textContent = r.instruksi || ''; ins.hidden = !r.instruksi;
-      if (r.selesai) { showErr('#iErr', 'Anda sudah menyelesaikan tes ini.'); $('#btnMulai').hidden = true; }
+      if (r.selesai) { hapusSesi(); showErr('#iErr', 'Anda sudah menyelesaikan tes ini.'); $('#btnMulai').hidden = true; }
       else {
         showErr('#iErr', ''); $('#btnMulai').hidden = false; $('#btnMulai').textContent = r.lanjut ? 'Lanjutkan Tes' : 'Mulai Tes';
         // Gerbang operator: peserta yang belum mulai menunggu sampai panitia membuka tes
         setMenunggu(!(r.buka || r.lanjut));
       }
       show('sInfo');
-    }).catch(function (e) { showErr('#lErr', msg(e)); }).then(function () { busy(false); });
+    }).catch(function (e) {
+      if (otomatis) { hapusSesi(); showErr('#lErr', 'Sesi sebelumnya tidak dapat dipulihkan (' + msg(e) + '). Silakan login kembali.'); }
+      else showErr('#lErr', msg(e));
+    }).then(function () { busy(false); });
   }
   $('#btnLogin').onclick = doLogin;
   $('#inTgl').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
-  $('#btnBatal').onclick = function () { setMenunggu(false); show('sLogin'); };
+  $('#btnBatal').onclick = function () { setMenunggu(false); hapusSesi(); show('sLogin'); };
 
   /* Layar tunggu: tombol Mulai nonaktif sampai operator membuka tes (cek tiap ~6 detik) */
   var waitTimer = null;
@@ -346,14 +355,15 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
 
   /* Sesi tersimpan di tab ini saja (sessionStorage) agar refresh tidak memaksa login ulang. Hilang saat tab ditutup. */
   var SKEY = 'cat_sesi';
-  function simpanSesi() { try { sessionStorage.setItem(SKEY, JSON.stringify({ no: ST.no, tgl: ST.tgl })); } catch (e) { /* diblokir: abaikan */ } }
+  /* st: 'info' = sudah login, belum mulai; 'tes' = tes sedang berjalan */
+  function simpanSesi(st) { try { sessionStorage.setItem(SKEY, JSON.stringify({ no: ST.no, tgl: ST.tgl, st: st || 'tes' })); } catch (e) { /* diblokir: abaikan */ } }
   function hapusSesi() { try { sessionStorage.removeItem(SKEY); } catch (e) { /* abaikan */ } }
 
   /* -------------------- TES -------------------- */
   function startTes(d) {
     ST.token = d.token; ST.soal = d.soal; ST.jaw = d.jaw || {}; ST.ragu = d.ragu || {};
     ST.dirty = {}; ST.cur = 0; ST.pel = d.pel; ST.max = d.maxPel; ST.active = true;
-    simpanSesi();
+    simpanSesi('tes');
     setDeadline(d.sisa);
     $('#tNama').textContent = d.nama; $('#tNo').textContent = d.no + ' - ' + d.judul;
     updatePel();
@@ -565,6 +575,7 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
     var s = null;
     try { s = JSON.parse(sessionStorage.getItem(SKEY) || 'null'); } catch (e) { s = null; }
     if (!s || !s.no || !s.tgl) return;
+    if (s.st === 'info') { masuk(s.no, s.tgl, true); return; }
     ST.no = s.no; ST.tgl = s.tgl; busy(true);
     run('mulaiTes', s.no, s.tgl, navigator.userAgent).then(function (d) {
       if (d.selesai) return showDone(d.hasil);
