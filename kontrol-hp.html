@@ -102,12 +102,18 @@
   .empty { text-align:center; padding:20px 0; color:var(--mute); }
   .item { display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; text-align:left; background:var(--panel); border:0; border-radius:14px; padding:11px 14px; margin-bottom:8px; font:inherit; color:var(--text); cursor:pointer; }
   .item small { color:var(--mute); display:block; }
-  .izin { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:11px 0; border-bottom:1px solid var(--line); }
-  .izin:last-of-type { border:0; } .izin span { font-size:14px; line-height:1.35; }
-  .izin small { display:block; color:var(--mute); font-size:12px; }
-  .sw { -webkit-appearance:none; appearance:none; width:46px; height:28px; border-radius:14px; background:#c9cedb; position:relative; flex:none; cursor:pointer; transition:background .15s; margin:0; min-height:0; }
-  .sw::after { content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; transition:left .15s; box-shadow:0 1px 3px rgba(0,0,0,.25); }
-  .sw:checked { background:var(--ok); } .sw:checked::after { left:21px; }
+  /* Kartu hak akses panitia (ketuk untuk ON/OFF) */
+  .izgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:10px; }
+  .izk { display:flex; flex-direction:column; justify-content:space-between; gap:10px; min-height:104px; padding:12px 12px 11px; border-radius:16px; border:1.5px solid var(--line);
+         background:var(--panel); color:var(--text); text-align:left; font:inherit; cursor:pointer; transition:background .18s, border-color .18s, transform .08s; }
+  .izk:active { transform:scale(.97); }
+  .izk .jd { display:block; font-weight:700; font-size:14px; line-height:1.25; }
+  .izk .kt { display:block; margin-top:3px; color:var(--mute); font-size:12px; font-weight:400; line-height:1.35; }
+  .izk .st2 { align-self:flex-start; font-size:11px; font-weight:800; letter-spacing:.06em; padding:3px 11px; border-radius:999px; background:#dfe3ec; color:#5a5f78; transition:background .18s, color .18s; }
+  .izk.aktif { background:var(--okbg); border-color:#9ad8b6; }
+  .izk.aktif .st2 { background:var(--ok); color:#fff; }
+  .izsum { color:var(--mute); font-size:13px; margin:0 0 10px; }
+  @media (prefers-reduced-motion: reduce) { .side, .scrim, .fab svg, .izk { transition:none !important; } }
 
   .login { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:16px; }
   .login .card { width:100%; max-width:400px; margin:0; padding:26px; }
@@ -148,9 +154,15 @@
     .mbar .mt { flex:1; min-width:0; } .mbar .mt b { display:block; font-size:18px; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .mbar .mt small { color:var(--mute); font-size:11px; }
     .side { position:fixed; top:0; right:0; bottom:0; width:min(292px, 84vw); z-index:50; border-radius:26px 0 0 26px; padding:calc(18px + env(safe-area-inset-top)) 14px 96px;
-            overflow-y:auto; transform:translateX(105%); transition:transform .22s ease; box-shadow:none; }
-    .side.open { transform:none; box-shadow:0 0 60px rgba(21,18,46,.35); }
-    .scrim { position:fixed; inset:0; z-index:45; background:rgba(21,18,46,.45); } .scrim.on { display:block; }
+            overflow-y:auto; transform:translateX(104%); visibility:hidden; will-change:transform; box-shadow:none;
+            transition:transform .34s cubic-bezier(.22,.8,.25,1), box-shadow .34s ease, visibility 0s linear .34s; }
+    .side.open { transform:none; visibility:visible; box-shadow:0 0 44px rgba(21,18,46,.32);
+            transition:transform .34s cubic-bezier(.22,.8,.25,1), box-shadow .34s ease, visibility 0s; }
+    .scrim { display:block; position:fixed; inset:0; z-index:45; background:rgba(21,18,46,.45); opacity:0; visibility:hidden; pointer-events:none;
+             transition:opacity .3s ease, visibility 0s linear .3s; }
+    .scrim.on { opacity:1; visibility:visible; pointer-events:auto; transition:opacity .3s ease, visibility 0s; }
+    .fab svg { transition:transform .34s cubic-bezier(.22,.8,.25,1); } .fab.buka svg { transform:rotate(90deg); }
+    .izgrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; } .izk { min-height:100px; padding:11px 11px 10px; }
     #tabs button.on::before { left:-14px; }
     .top { display:none; }
     .card { padding:16px; border-radius:18px; margin-bottom:12px; } .card h2 { font-size:17px; }
@@ -199,8 +211,8 @@
     <button data-t="data"><span class="ico c2"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></span>Data</button>
     <button data-t="hasil"><span class="ico c3"><svg viewBox="0 0 24 24"><path d="M6 20v-8M12 20V5M18 20v-11"/></svg></span>Hasil</button>
     <button data-t="atur"><span class="ico c4"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></span>Pengaturan</button>
-    <button data-t="rawat"><span class="ico c5"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9l-3.8 3.8z"/></svg></span>Pemeliharaan</button>
-    <button data-t="akses"><span class="ico c6"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span>Akses Panitia</button>
+    <button data-t="rawat"><span class="ico c5"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9l-3.8 3.8z"/></svg></span>Reset &amp; Sesi</button>
+    <button data-t="akses"><span class="ico c6"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span>Akses &amp; Sandi</button>
   </nav>
   <div class="foot"><b>Masuk sebagai</b><span class="peran" id="peran">-</span><button class="b sec" id="btnKeluar" style="padding:7px 14px;min-height:36px;font-size:13px">Keluar</button></div>
 </aside>
@@ -339,17 +351,6 @@
     <div id="ujiList"><div class="empty">Memuat ...</div></div>
   </div>
 
-  <div class="card" id="cSandi">
-    <h2>Ganti kata sandi Kepala UPT PMB</h2>
-    <p class="d">Perangkat Kepala yang lain akan dikeluarkan.</p>
-    <div class="grid2">
-      <div><label for="pLama">Kata sandi lama</label><input type="password" id="pLama" autocomplete="current-password"></div>
-      <div><label for="pBaru">Kata sandi baru (min. 8 karakter)</label><input type="password" id="pBaru" autocomplete="new-password"></div>
-    </div>
-    <div class="row" style="margin-top:12px"><button class="b sec" id="btnSandi">Ganti kata sandi</button></div>
-    <div id="mSandi"></div>
-  </div>
-
   <div class="card danger" id="cKosong">
     <h2>Kosongkan data di Supabase</h2>
     <p class="d">Tidak dapat dibatalkan. Unduh Hasil dulu bila masih diperlukan.</p>
@@ -367,9 +368,10 @@
 <section id="t-akses">
   <div class="card">
     <h2>Hak akses panitia</h2>
-    <p class="d">Pilih fitur yang boleh dipakai akun <b>panitia</b>. Bawaan: dashboard (pantau dan ringkasan hasil), reset peserta, dan tambah peserta. Perubahan berlaku dalam beberapa detik pada HP panitia. Mengosongkan data, mengganti kata sandi Kepala, dan halaman ini selalu khusus Kepala.</p>
-    <div id="izinList"><div class="empty">Memuat ...</div></div>
-    <div class="row" style="margin-top:12px"><button class="b" id="btnIzin">Simpan hak akses</button></div>
+    <p class="d">Ketuk kartu untuk menyalakan <b>ON</b> atau mematikan <b>OFF</b> fitur panitia, lalu tekan <b>Simpan</b>. Perubahan berlaku dalam beberapa detik di HP panitia. Halaman ini, kosongkan data, dan kata sandi Kepala selalu khusus Kepala.</p>
+    <p class="izsum" id="izSum"></p>
+    <div id="izinList" class="izgrid"><div class="empty">Memuat ...</div></div>
+    <div class="row" style="margin-top:14px"><button class="b" id="btnIzin">Simpan hak akses</button><button class="b sec" id="btnIzinBawaan">Kembalikan ke bawaan</button></div>
     <div id="mIzin"></div>
   </div>
   <div class="card">
@@ -379,6 +381,16 @@
     <input type="password" id="pnSandi" autocomplete="new-password">
     <div class="row" style="margin-top:12px"><button class="b" id="btnPnSandi">Simpan kata sandi panitia</button><button class="b sec" id="btnPnKeluar">Keluarkan semua sesi panitia</button></div>
     <div id="mPn"></div>
+  </div>
+  <div class="card" id="cSandi">
+    <h2>Ganti kata sandi Kepala UPT PMB</h2>
+    <p class="d">Perangkat Kepala yang lain akan dikeluarkan.</p>
+    <div class="grid2">
+      <div><label for="pLama">Kata sandi lama</label><input type="password" id="pLama" autocomplete="current-password"></div>
+      <div><label for="pBaru">Kata sandi baru (min. 8 karakter)</label><input type="password" id="pBaru" autocomplete="new-password"></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="b sec" id="btnSandi">Ganti kata sandi</button></div>
+    <div id="mSandi"></div>
   </div>
 </section>
 </main>
@@ -403,7 +415,7 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
 
   var S = { token: '', peran: '', izin: null, tab: 'pantau', prodi: [], filter: '', cari: '', offset: 0, total: 0, rt: null, prefillNo: '' };
   var PAGE = 40;
-  var JUDUL = { pantau: 'Pantau & Mulai', data: 'Data', hasil: 'Hasil', atur: 'Pengaturan', rawat: 'Pemeliharaan', akses: 'Akses Panitia' };
+  var JUDUL = { pantau: 'Pantau & Mulai', data: 'Data', hasil: 'Hasil', atur: 'Pengaturan', rawat: 'Reset & Sesi', akses: 'Akses & Sandi' };
 
   /* ---------- util ---------- */
   function store(k, v) { try { if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) {} }
@@ -514,8 +526,8 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
 
   /* ---------- menu geser (HP) dan tab ---------- */
   var IKON_MENU = '<path d="M4 7h16M4 12h16M4 17h16"/>', IKON_TUTUP = '<path d="M6 6l12 12M18 6L6 18"/>';
-  function bukaMenu() { $('#side').classList.add('open'); $('#scrim').classList.add('on'); $('#fabIkon').innerHTML = IKON_TUTUP; }
-  function tutupMenu() { $('#side').classList.remove('open'); $('#scrim').classList.remove('on'); $('#fabIkon').innerHTML = IKON_MENU; }
+  function bukaMenu() { $('#side').classList.add('open'); $('#scrim').classList.add('on'); $('#btnMenu').classList.add('buka'); $('#fabIkon').innerHTML = IKON_TUTUP; }
+  function tutupMenu() { $('#side').classList.remove('open'); $('#scrim').classList.remove('on'); $('#btnMenu').classList.remove('buka'); $('#fabIkon').innerHTML = IKON_MENU; }
   $('#btnMenu').onclick = function () { if ($('#side').classList.contains('open')) tutupMenu(); else bukaMenu(); };
   $('#scrim').onclick = tutupMenu;
 
@@ -525,7 +537,12 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
     $$('main section').forEach(function (s) { s.classList.toggle('on', s.id === 't-' + t); });
     $('#mTitle').textContent = JUDUL[t] || '';
   }
-  function pindah(t) { setTab(t); tutupMenu(); window.scrollTo(0, 0); segarkan(false); }
+  function pindah(t) {
+    var terbuka = $('#side').classList.contains('open');
+    tutupMenu();
+    var jalan = function () { setTab(t); window.scrollTo(0, 0); segarkan(false); };
+    if (terbuka) setTimeout(jalan, 170); else jalan();   // tunggu panel hampir menutup supaya animasi tidak tersendat
+  }
   $$('#tabs button').forEach(function (b) { b.onclick = function () { pindah(b.dataset.t); }; });
   $('#btnRef').onclick = function () { segarkan(false); };
   $('#btnRef2').onclick = function () { segarkan(false); };
@@ -936,21 +953,53 @@ var SUPABASE_KEY = 'sb_publishable_AYhviycfmKlhDyIhDqYXfA_1M0M8UE7';
   };
 
   /* ---------- akses panitia (khusus Kepala) ---------- */
+  var IZIN_META = {
+    pantau: ['Pantau', 'Ringkasan angka dan daftar peserta'],
+    hasil: ['Ringkasan hasil', 'Jumlah peserta per prodi'],
+    reset: ['Reset peserta', 'Izinkan peserta mengulang tes'],
+    tambah: ['Tambah peserta', 'Tambah atau ubah data peserta'],
+    gerbang: ['Buka / tutup tes', 'Mengatur gerbang mulai tes'],
+    tindakan: ['Tindakan peserta', 'Tambah waktu, selesaikan, ubah tgl lahir, buka blokir'],
+    rincian: ['Tanggal lahir & log', 'Lihat data login dan riwayat peserta'],
+    akun_uji: ['Akun uji', 'Abaikan pelanggaran akun uji'],
+    unduh: ['Unduh data', 'Hasil, Sesi, dan Log (Excel / CSV)'],
+    tutup_ked: ['Tutup sesi lewat waktu', 'Nilai sesi yang waktunya habis'],
+    pengaturan: ['Pengaturan tes', 'Durasi, batas pelanggaran, dan lainnya']
+  };
+  var IZIN_BAWAAN = { pantau: true, hasil: true, reset: true, tambah: true };
+
+  function setKartu(k, on) {
+    k.classList.toggle('aktif', on); k.setAttribute('aria-pressed', on ? 'true' : 'false');
+    k.querySelector('.st2').textContent = on ? 'ON' : 'OFF'; k.dataset.on = on ? '1' : '0';
+  }
+  function hitungIzin() {
+    $('#izSum').textContent = $$('#izinList .izk[data-on="1"]').length + ' dari ' + $$('#izinList .izk').length + ' fitur aktif untuk panitia.';
+  }
   function muatAkses() {
     return T('hp_panitia_baca').then(function (d) {
       var l = $('#izinList'); clear(l);
       d.izin.forEach(function (x) {
-        var r = el('label', 'izin'); r.appendChild(el('span', '', x.label));
-        var c = el('input', 'sw'); c.type = 'checkbox'; c.checked = !!x.panitia; c.dataset.f = x.fitur; r.appendChild(c); l.appendChild(r);
+        var m = IZIN_META[x.fitur] || [x.label, ''];
+        var k = el('button', 'izk'); k.type = 'button'; k.dataset.f = x.fitur;
+        var atas = el('span'); atas.appendChild(el('span', 'jd', m[0])); atas.appendChild(el('span', 'kt', m[1]));
+        k.appendChild(atas); k.appendChild(el('span', 'st2', 'OFF'));
+        setKartu(k, !!x.panitia);
+        k.onclick = function () { setKartu(k, k.dataset.on !== '1'); hitungIzin(); msg('#mIzin', 'Perubahan belum disimpan. Tekan Simpan hak akses.', 'info'); };
+        l.appendChild(k);
       });
+      hitungIzin(); msg('#mIzin', '');
       $('#pnInfo').textContent = (d.ada_sandi ? 'Kata sandi panitia sudah diatur.' : 'Kata sandi panitia BELUM diatur: panitia belum bisa masuk.') +
         ' Sesi panitia yang sedang aktif: ' + d.sesi_aktif + '.';
     });
   }
   $('#btnIzin').onclick = function () {
-    var izin = {}; $$('#izinList [data-f]').forEach(function (c) { izin[c.dataset.f] = c.checked; });
+    var izin = {}; $$('#izinList .izk').forEach(function (k) { izin[k.dataset.f] = k.dataset.on === '1'; });
     busy(true, 'Menyimpan ...');
     T('hp_atur_panitia', { p_izin: izin }).then(function (r) { busy(false); msg('#mIzin', r.msg, 'ok'); }).catch(function (e) { busy(false); msg('#mIzin', e.message, 'err'); });
+  };
+  $('#btnIzinBawaan').onclick = function () {
+    $$('#izinList .izk').forEach(function (k) { setKartu(k, !!IZIN_BAWAAN[k.dataset.f]); });
+    hitungIzin(); msg('#mIzin', 'Dikembalikan ke bawaan (Pantau, Ringkasan hasil, Reset, Tambah peserta). Tekan Simpan hak akses untuk menerapkan.', 'info');
   };
   $('#btnPnSandi').onclick = function () {
     var s = $('#pnSandi').value;
